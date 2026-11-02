@@ -148,6 +148,7 @@ FIREBASE_API_KEY=x FIREBASE_AUTH_DOMAIN=localhost FIREBASE_PROJECT_ID=demo-geosc
 - 地磁気の北極: IGRF (国際標準地球磁場) 2025 の双極子の極 (北緯 80.8°・西経 72.6°)
 - 台風の進路・海流の通り道・海の深さの断面・地震の震源と地震計の位置は、教科書でよく使われる値や形をもとにした目安です (本当の観測データではありません)
 - 作りなおすときは `scripts/gen-data.mjs` を使います (使い方はファイルの先頭)
+- 地学の解説は、文部科学省の学習資料「一家に1枚」特設サイト (https://www.bosai.go.jp/poster-earth/ 。企画・監修: 防災科研) を参考に、独自の文で書いています。サイトの図や文章はのせず、各画面の「もっと知る」からリンクしています (`src/data/sources.ts`)
 
 ## ライセンス
 

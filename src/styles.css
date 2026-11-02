@@ -1105,6 +1105,21 @@ rt {
   font-size: 0.75rem;
 }
 
+.source-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-weight: 700;
+}
+
+.source-list a::after {
+  content: ' ↗';
+  font-weight: 400;
+}
+
 .legend {
   display: flex;
   flex-wrap: wrap;

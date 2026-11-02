@@ -1,6 +1,7 @@
 import { speedByKey, Clock } from '../core/clock';
 import { getSettings, markSeen, saveSettings } from '../core/storage';
 import { placeById, type NamedPlace } from '../data/places';
+import { SOURCES, SOURCE_CREDIT } from '../data/sources';
 import { resolveWhen, type Guide } from '../guides';
 import { Stage } from '../three/stage';
 import { AuroraView } from '../views/aurora';
@@ -14,7 +15,7 @@ import { TideView } from '../views/tide';
 import { CurrentView, RiverView } from '../views/water';
 import { CloudView, StormView, TyphoonView } from '../views/weather';
 import type { View, ViewContext, ViewId } from '../views/types';
-import { h, homeButton, plain, rubyHtml, setRuby } from './dom';
+import { h, homeButton, plain, rubyHtml, setRuby, withRuby } from './dom';
 import { infoHtml } from './info';
 import { placePicker } from './place';
 import { guide as shibaGuide } from './shiba';
@@ -105,6 +106,8 @@ export function renderViewer(root: HTMLElement, target: Target, resume?: Resume)
   const toggleBox = h('div', { class: 'toggles', role: 'group', 'aria-label': '表示の切りかえ' });
   const infoBox = h('div', { class: 'info' });
   const placeBox = h('section', { class: 'panel-section place-box' });
+  const sourceList = h('ul', { class: 'source-list' });
+  const sourceBox = h('section', { class: 'panel-section', hidden: true }, withRuby('h2', '', 'もっと知(し)る'), sourceList, withRuby('p', 'info-note', SOURCE_CREDIT));
   const lead = h('p', { class: 'viewer-lead' });
 
   const panel = h('aside', { class: 'panel' });
@@ -182,6 +185,9 @@ export function renderViewer(root: HTMLElement, target: Target, resume?: Resume)
     const meta = VIEWS[id];
     title.innerHTML = rubyHtml(guide ? guide.title : meta.title);
     stageNote.innerHTML = rubyHtml(meta.note ?? DEFAULT_NOTE);
+    const sources = SOURCES[id] ?? [];
+    sourceBox.hidden = !sources.length;
+    sourceList.replaceChildren(...sources.map((s) => h('li', {}, h('a', { href: s.url, target: '_blank', rel: 'noopener' }, withRuby('span', '', s.label)))));
     // 日時の画面と現象の時間の画面を行き来したら、時計をそれぞれのはじめにもどす
     const process = !!meta.timeline;
     clock.range = meta.timeline ? [0, meta.timeline.length] : null;
@@ -331,6 +337,7 @@ export function renderViewer(root: HTMLElement, target: Target, resume?: Resume)
         h('section', { class: 'panel-section' }, h('h2', {}, '表示'), toggleBox),
         h('section', { class: 'panel-section' }, h('h2', {}, 'いまのようす'), infoBox),
         placeBox,
+        sourceBox,
       ),
     ];
   }
