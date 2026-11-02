@@ -92,22 +92,33 @@ function branchDist(x: number, z: number): number {
 /** 海へ出た川の水が、海にとけこんでいく (1 は川の水、0 は海) */
 const outflowAlpha = (x: number, z: number) => 1 - smooth(0, OUTFLOW, coastDist(x, z));
 
+/** 扇状地の頂点 (山の出口 x=-5) の高さ。V 字谷の谷底もここにつながる */
+const FAN_TOP = 0.6;
+
+/** 平地と扇状地の高さ */
+function lowland(x: number, z: number): number {
+  const plain = 0.28 - (x + 2) * 0.024;
+  // 扇状地: 山を出たところ (x=-5) を頂点にした、ゆるい円すい
+  const fan = FAN_TOP - Math.hypot(x + 5, z * 1.1) * 0.07;
+  return Math.max(plain, fan);
+}
+
+/** 山の高さ。山の出口 (x=-5) から先は、すそが平地へ下がる */
+function mountain(x: number, z: number, d: number): number {
+  // 東西にのびる尾根を V 字にけずった谷。谷底は下流ほど低く、山の出口で扇状地の頂点につながる
+  const ridge = 0.9 + Math.max(0, -5 - x) * 0.5 - Math.max(0, x + 5) * 0.7;
+  const base = ridge + 0.25 * Math.sin(z * 1.7 + x) * Math.sin(x * 0.8) * (1 - smooth(-5.5, -4.5, x));
+  const floor = FAN_TOP + Math.max(0, -5 - x) * 0.1;
+  const v = Math.max(0, 1 - d / 2.6);
+  return base - Math.max(0, base - floor) * v ** 1.15;
+}
+
 /** 土地の高さ */
 function landHeight(x: number, z: number): number {
   const zc = riverZ(x);
   const d = Math.abs(z - zc);
-  if (x < -5) {
-    // 山: 東西にのびる尾根を V 字にけずった谷
-    const base = 0.9 + (-5 - x) * 0.5 + 0.25 * Math.sin(z * 1.7 + x) * Math.sin(x * 0.8);
-    const v = Math.max(0, 1 - d / 2.6);
-    return base - (base - 0.35) * v ** 1.15;
-  }
-  const plain = 0.28 - (x + 2) * 0.024;
-  // 扇状地: 山を出たところ (x=-5) を頂点にした、ゆるい円すい
-  const r = Math.hypot(x + 5, z * 1.1);
-  const fan = Math.max(0, 0.9 - r * 0.22);
-  let h = Math.max(plain, fan);
-  if (x > -5 && x < -4.2) h = Math.max(h, 0.9 + (-4.2 - x) * 0.2 * (1 + Math.abs(z) * 0.5));
+  // 山と平地を別々に作って高いほうをとる (境目で段差ができないように)
+  let h = Math.max(mountain(x, z, d), lowland(x, z));
   // 海岸の近くは海面より少し高い平らな土地 (三角州)
   const c = coastDist(x, z);
   if (x > 7.5) h = Math.max(h, 0.025 + 0.025 * Math.min(1, -c * 1.5));
@@ -123,7 +134,7 @@ function landColor(x: number, z: number, y: number, out: THREE.Color): void {
   const zc = riverZ(x);
   const near = Math.abs(z - zc);
   if (y < 0) out.setHex(0xc9b48a).lerp(new THREE.Color(0x3d6f9f), Math.min(1, -y * 3));
-  else if (x < -5) out.setHex(0x4f7d43).lerp(new THREE.Color(0x8a7356), Math.min(1, near < 0.8 ? 0.7 : 0.15));
+  else if (x < -5 || y > lowland(x, z) + 0.03) out.setHex(0x4f7d43).lerp(new THREE.Color(0x8a7356), Math.min(1, near < 0.8 ? 0.7 : 0.15));
   else if (Math.hypot(x + 5, z * 1.1) < 3.6) out.setHex(0xa49a6a);
   else {
     // 平地は緑、三角州は砂やどろの色、波打ちぎわは砂浜
